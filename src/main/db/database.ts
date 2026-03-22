@@ -7,7 +7,7 @@ let db: Database.Database | null = null;
 
 export function getDb(): Database.Database {
   if (!db) {
-    const dbPath = path.join(app.getPath("userData"), "tenfifth.db");
+    const dbPath = path.join(app.getPath("userData"), "chicanery.db");
     db = new Database(dbPath);
     db.pragma("journal_mode = WAL");
     runMigrations(db);

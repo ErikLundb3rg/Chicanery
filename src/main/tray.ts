@@ -21,7 +21,7 @@ export function createTray(db: Database, scheduler: PromptScheduler): Tray {
   icon.setTemplateImage(true);
 
   tray = new Tray(icon);
-  tray.setToolTip("tenfifth");
+  tray.setToolTip("Chicanery");
   rebuildMenu(db, scheduler);
 
   return tray;
