@@ -1,0 +1,27 @@
+{
+  "name": "tenfifth",
+  "version": "0.1.0",
+  "description": "Menu bar time logger",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js && electron-rebuild -f -w better-sqlite3",
+    "dev": "bun run build:main && bun run build:renderer && electron .",
+    "build:main": "bun build src/main/main.ts --target=node --format=cjs --outdir=dist/main --external=electron --external=better-sqlite3",
+    "build:renderer": "bun run scripts/build-renderer.ts",
+    "build": "bun run build:main && bun run build:renderer",
+    "dist": "bun run build && electron-builder",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.6.0",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "electron": "~33.0.0",
+    "electron-builder": "^25.0.0",
+    "preact": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}
