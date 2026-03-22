@@ -1,14 +1,18 @@
 import { ipcMain } from "electron";
 import type { Database } from "better-sqlite3";
-import { addEntry, getEntriesForDay, getEntriesForRange, getConfigValue, setConfigValue } from "./db/queries";
+import { addEntry, hasEntryForInterval, getEntriesForDay, getEntriesForRange, getConfigValue, setConfigValue } from "./db/queries";
 import type { Config } from "../shared/types";
 import { DEFAULT_CONFIG } from "../shared/types";
 import { CONFIG_KEYS } from "../shared/config-keys";
 import type { PromptScheduler } from "./scheduler";
 
 export function registerIpcHandlers(db: Database, scheduler: PromptScheduler): void {
-  ipcMain.handle("entries:add", (_event, content: string, intervalStart: number, intervalEnd: number) => {
-    return addEntry(db, content, intervalStart, intervalEnd);
+  ipcMain.handle("entries:add", (_event, content: string, intervalStart: number, intervalEnd: number, category: string | null) => {
+    return addEntry(db, content, intervalStart, intervalEnd, category);
+  });
+
+  ipcMain.handle("entries:hasForInterval", (_event, intervalStart: number, intervalEnd: number) => {
+    return hasEntryForInterval(db, intervalStart, intervalEnd);
   });
 
   ipcMain.handle("entries:getToday", () => {

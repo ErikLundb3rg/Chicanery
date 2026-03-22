@@ -2,8 +2,11 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { Entry, Config } from "../../shared/types";
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  submitEntry: (content: string, intervalStart: number, intervalEnd: number): Promise<Entry> =>
-    ipcRenderer.invoke("entries:add", content, intervalStart, intervalEnd),
+  submitEntry: (content: string, intervalStart: number, intervalEnd: number, category: string | null): Promise<Entry> =>
+    ipcRenderer.invoke("entries:add", content, intervalStart, intervalEnd, category),
+
+  hasEntryForInterval: (intervalStart: number, intervalEnd: number): Promise<boolean> =>
+    ipcRenderer.invoke("entries:hasForInterval", intervalStart, intervalEnd),
 
   getEntriesForToday: (): Promise<Entry[]> =>
     ipcRenderer.invoke("entries:getToday"),

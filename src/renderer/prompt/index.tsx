@@ -3,19 +3,25 @@ import { render } from "preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { api } from "../shared/ipc-api";
 import { formatTime } from "../shared/formatters";
+import { FOCUS_LEVELS } from "../../shared/types";
+import type { Category } from "../../shared/types";
 
 function PromptWindow() {
   const [text, setText] = useState("");
   const [intervalStart, setIntervalStart] = useState(0);
   const [intervalEnd, setIntervalEnd] = useState(0);
+  const [category, setCategory] = useState<Category | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isOverwrite, setIsOverwrite] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const cleanup = api.onNewPrompt((start, end) => {
+    const cleanup = api.onNewPrompt(async (start, end) => {
       setIntervalStart(start);
       setIntervalEnd(end);
       setText("");
+      setCategory(null);
+      setIsOverwrite(await api.hasEntryForInterval(start, end));
       textareaRef.current?.focus();
     });
     textareaRef.current?.focus();
@@ -27,8 +33,9 @@ function PromptWindow() {
     if (!content || submitting) return;
     setSubmitting(true);
     try {
-      await api.submitEntry(content, intervalStart, intervalEnd);
+      await api.submitEntry(content, intervalStart, intervalEnd, category);
       setText("");
+      setCategory(null);
       api.closePrompt();
     } finally {
       setSubmitting(false);
@@ -47,14 +54,19 @@ function PromptWindow() {
   return (
     <>
       <div class="flex items-center justify-between mb-2.5">
-        <span class="text-[13px] font-semibold  tracking-wide">
+        <span class="text-[13px] font-semibold tracking-wide">
           What did you do?
         </span>
-        {intervalStart > 0 && (
-          <span class="text-xs text-text-muted tabular-nums font-semibold">
-            {formatTime(intervalStart)} – {formatTime(intervalEnd)}
-          </span>
-        )}
+        <div class="flex items-center gap-2">
+          {isOverwrite && (
+            <span class="text-[11px] font-semibold text-red-500 uppercase tracking-wide">Overwrite</span>
+          )}
+          {intervalStart > 0 && (
+            <span class="text-xs text-text-muted tabular-nums font-semibold">
+              {formatTime(intervalStart)} – {formatTime(intervalEnd)}
+            </span>
+          )}
+        </div>
       </div>
 
       <textarea
@@ -66,7 +78,36 @@ function PromptWindow() {
         onKeyDown={handleKeyDown}
       />
 
-      <div class="no-drag flex gap-2 mt-3">
+      <div class="no-drag flex items-center gap-2 mt-2.5">
+        <span class="text-[11px] text-text-faint font-medium">Focus level</span>
+        <div class="flex rounded-md border border-border overflow-hidden">
+          {FOCUS_LEVELS.map((level) => (
+            <button
+              key={level.value}
+              class={`w-8 py-1 text-[12px] font-medium cursor-pointer transition-colors border-r border-border last:border-r-0 ${
+                category === level.value
+                  ? "bg-accent text-white"
+                  : "bg-surface-raised text-text-faint hover:text-text-muted"
+              }`}
+              onClick={() => setCategory(category === level.value ? null : level.value)}
+            >
+              {level.label}
+            </button>
+          ))}
+        </div>
+        <button
+          class={`px-3 py-1 rounded-md text-[12px] font-medium cursor-pointer transition-colors border ${
+            category === "maintenance"
+              ? "bg-accent text-white border-accent"
+              : "bg-surface-raised text-text-faint border-border hover:text-text-muted"
+          }`}
+          onClick={() => setCategory(category === "maintenance" ? null : "maintenance")}
+        >
+          Maintenance
+        </button>
+      </div>
+
+      <div class="no-drag flex gap-2 mt-2">
         <button
           class="flex-1 bg-surface-raised text-text-muted border border-border rounded-[7px] text-[13px] font-medium py-1.5 cursor-pointer active:opacity-70 transition-opacity"
           onClick={handleSkip}

@@ -30,4 +30,9 @@ export function runMigrations(db: Database.Database): void {
       : `INSERT INTO schema_version VALUES (1)`
     );
   }
+
+  if (version < 2) {
+    db.exec(`ALTER TABLE entries ADD COLUMN category TEXT`);
+    db.exec(`UPDATE schema_version SET version = 2`);
+  }
 }

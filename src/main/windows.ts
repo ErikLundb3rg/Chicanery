@@ -22,7 +22,7 @@ export function getPromptWindow(): BrowserWindow {
   if (!windows.prompt || windows.prompt.isDestroyed()) {
     windows.prompt = new BrowserWindow({
       width: 420,
-      height: 240,
+      height: 280,
       show: false,
       frame: false,
       resizable: false,
@@ -40,7 +40,7 @@ export function showPromptWindow(intervalStart: number, intervalEnd: number): vo
 
   const { bounds } = screen.getPrimaryDisplay();
   const x = Math.round(bounds.x + bounds.width / 2 - 210);
-  const y = Math.round(bounds.y + bounds.height / 2 - 120);
+  const y = Math.round(bounds.y + bounds.height / 2 - 140);
   win.setPosition(x, y);
 
   const send = () => win.webContents.send("prompt:new", intervalStart, intervalEnd);
@@ -62,7 +62,7 @@ export function getTimelineWindow(): BrowserWindow {
   if (!windows.timeline || windows.timeline.isDestroyed()) {
     windows.timeline = new BrowserWindow({
       width: 520,
-      height: 600,
+      height: 680,
       show: false,
       titleBarStyle: "hiddenInset",
       webPreferences: sharedWebPreferences(),

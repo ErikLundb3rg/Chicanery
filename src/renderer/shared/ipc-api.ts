@@ -1,7 +1,8 @@
 import type { Entry, Config } from "../../shared/types";
 
 interface ElectronAPI {
-  submitEntry: (content: string, intervalStart: number, intervalEnd: number) => Promise<Entry>;
+  submitEntry: (content: string, intervalStart: number, intervalEnd: number, category: string | null) => Promise<Entry>;
+  hasEntryForInterval: (intervalStart: number, intervalEnd: number) => Promise<boolean>;
   getEntriesForToday: () => Promise<Entry[]>;
   getEntriesForRange: (start: number, end: number) => Promise<Entry[]>;
   getConfig: () => Promise<Config>;

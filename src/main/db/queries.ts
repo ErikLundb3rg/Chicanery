@@ -5,14 +5,26 @@ export function addEntry(
   db: Database.Database,
   content: string,
   intervalStart: number,
-  intervalEnd: number
+  intervalEnd: number,
+  category: string | null
 ): Entry {
   const stmt = db.prepare(
-    `INSERT INTO entries (content, interval_start, interval_end)
-     VALUES (?, ?, ?)
+    `INSERT INTO entries (content, interval_start, interval_end, category)
+     VALUES (?, ?, ?, ?)
      RETURNING *`
   );
-  return stmt.get(content, intervalStart, intervalEnd) as Entry;
+  return stmt.get(content, intervalStart, intervalEnd, category) as Entry;
+}
+
+export function hasEntryForInterval(
+  db: Database.Database,
+  intervalStart: number,
+  intervalEnd: number
+): boolean {
+  const row = db
+    .prepare("SELECT 1 FROM entries WHERE interval_start = ? AND interval_end = ? LIMIT 1")
+    .get(intervalStart, intervalEnd);
+  return row !== undefined;
 }
 
 export function getEntriesForDay(db: Database.Database, date: Date): Entry[] {
