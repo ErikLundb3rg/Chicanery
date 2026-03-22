@@ -1,9 +1,14 @@
-import { build } from "bun";
+import { build, $ } from "bun";
 import path from "path";
 
 const root = path.join(import.meta.dir, "..");
 
 async function buildRenderer() {
+  // Build Tailwind CSS
+  await $`${root}/node_modules/.bin/tailwindcss \
+    --input ${root}/src/renderer/styles/globals.css \
+    --output ${root}/dist/renderer/styles/globals.css`.quiet();
+
   const results = await Promise.all([
     build({
       entrypoints: [path.join(root, "src/renderer/prompt/index.tsx")],
@@ -22,7 +27,6 @@ async function buildRenderer() {
       outdir: path.join(root, "dist/renderer/shared"),
       target: "node",
       format: "cjs",
-      // preload runs in Electron's node context, external electron
       external: ["electron"],
     }),
   ]);
@@ -34,18 +38,16 @@ async function buildRenderer() {
     }
   }
 
-  // Copy HTML files to dist
-  const copies = [
+  const copies: [string, string][] = [
     ["src/renderer/prompt/index.html", "dist/renderer/prompt/index.html"],
     ["src/renderer/timeline/index.html", "dist/renderer/timeline/index.html"],
   ];
 
-  for (const [src, dest] of copies) {
-    await Bun.write(
-      path.join(root, dest),
-      await Bun.file(path.join(root, src)).text()
-    );
-  }
+  await Promise.all(
+    copies.map(([src, dest]) =>
+      Bun.write(path.join(root, dest), Bun.file(path.join(root, src)))
+    )
+  );
 
   console.log("Renderer build complete.");
 }

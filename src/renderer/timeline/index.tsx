@@ -2,26 +2,8 @@
 import { render } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import { api } from "../shared/ipc-api";
+import { formatTime, formatDate, formatDuration } from "../shared/formatters";
 import type { Entry } from "../../shared/types";
-
-function formatTime(ms: number): string {
-  return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function formatDate(date: Date): string {
-  return date.toLocaleDateString([], {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function formatDuration(ms: number): string {
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.round((ms % 3_600_000) / 60_000);
-  if (h === 0) return `${m}m`;
-  return m === 0 ? `${h}h` : `${h}h ${m}m`;
-}
 
 function TimelineWindow() {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -29,56 +11,46 @@ function TimelineWindow() {
 
   async function load() {
     const data = await api.getEntriesForToday();
-    setEntries(data);
+    setEntries([...data].reverse());
     setLoading(false);
   }
 
   useEffect(() => {
     load();
-
-    // Refresh when window gains focus
     window.addEventListener("focus", load);
-
-    // Listen for refresh signals from main process
-    const handler = () => load();
-    window.addEventListener("timeline:refresh", handler);
-
-    return () => {
-      window.removeEventListener("focus", load);
-      window.removeEventListener("timeline:refresh", handler);
-    };
+    return () => window.removeEventListener("focus", load);
   }, []);
 
   const totalMs = entries.reduce((sum, e) => sum + (e.interval_end - e.interval_start), 0);
+  const today = formatDate(new Date());
 
   return (
     <>
-      <div class="titlebar">
-        <h1>Today</h1>
-        <span class="date">{formatDate(new Date())}</span>
+      <div class="flex items-center px-5 pt-7 pb-3 shrink-0">
+        <h1 class="text-[15px] font-semibold text-text-primary">Today</h1>
+        <span class="text-xs text-text-muted ml-auto tabular-nums">{today}</span>
       </div>
 
-      <div class="entries">
+      <div class="flex-1 overflow-y-auto px-5 pb-5">
         {loading ? null : entries.length === 0 ? (
-          <div class="empty">
-            <span class="icon">○</span>
+          <div class="flex flex-col items-center justify-center h-full text-text-ghost text-sm gap-2">
+            <span class="text-3xl">○</span>
             <span>No entries yet today</span>
           </div>
         ) : (
-          [...entries].reverse().map((entry) => (
-            <div key={entry.id} class="entry">
-              <div class="entry-time">
-                {formatTime(entry.interval_start)}<br />
-                <span style="color:#48484a">→ {formatTime(entry.interval_end)}</span>
+          entries.map((entry) => (
+            <div key={entry.id} class="flex gap-3.5 py-2.5 border-b border-surface-raised last:border-b-0">
+              <div class="text-[11px] text-text-faint tabular-nums whitespace-nowrap pt-0.5">
+                {formatTime(entry.interval_start)} – {formatTime(entry.interval_end)}
               </div>
-              <div class="entry-content">{entry.content}</div>
+              <div class="text-sm leading-relaxed text-text-secondary">{entry.content}</div>
             </div>
           ))
         )}
       </div>
 
       {entries.length > 0 && (
-        <div class="total">
+        <div class="px-5 py-3 border-t border-surface-raised text-xs text-text-muted shrink-0">
           {entries.length} {entries.length === 1 ? "entry" : "entries"} · {formatDuration(totalMs)} logged
         </div>
       )}

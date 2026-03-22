@@ -69,7 +69,7 @@ export class PromptScheduler {
   }
 
   private scheduleNext(): void {
-    const delay = this.nextBoundary() - Date.now();
+    const delay = Math.max(0, this.nextBoundary() - Date.now());
     this.timer = setTimeout(() => this.tick(), delay);
   }
 }

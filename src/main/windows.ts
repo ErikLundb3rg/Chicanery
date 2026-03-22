@@ -6,12 +6,16 @@ const windows: {
   timeline?: BrowserWindow;
 } = {};
 
-function preloadPath(): string {
-  return path.join(app.getAppPath(), "dist/renderer/shared/preload.js");
-}
-
 function rendererPath(...parts: string[]): string {
   return path.join(app.getAppPath(), "dist/renderer", ...parts);
+}
+
+function sharedWebPreferences(): Electron.WebPreferences {
+  return {
+    preload: rendererPath("shared/preload.js"),
+    contextIsolation: true,
+    nodeIntegration: false,
+  };
 }
 
 export function getPromptWindow(): BrowserWindow {
@@ -24,11 +28,7 @@ export function getPromptWindow(): BrowserWindow {
       resizable: false,
       alwaysOnTop: true,
       skipTaskbar: true,
-      webPreferences: {
-        preload: preloadPath(),
-        contextIsolation: true,
-        nodeIntegration: false,
-      },
+      webPreferences: sharedWebPreferences(),
     });
     windows.prompt.loadFile(rendererPath("prompt/index.html"));
   }
@@ -38,14 +38,12 @@ export function getPromptWindow(): BrowserWindow {
 export function showPromptWindow(intervalStart: number, intervalEnd: number): void {
   const win = getPromptWindow();
 
-  // Center on the primary display
   const { bounds } = screen.getPrimaryDisplay();
   const x = Math.round(bounds.x + bounds.width / 2 - 210);
   const y = Math.round(bounds.y + bounds.height / 2 - 120);
   win.setPosition(x, y);
 
   const send = () => win.webContents.send("prompt:new", intervalStart, intervalEnd);
-
   if (win.webContents.isLoading()) {
     win.webContents.once("did-finish-load", send);
   } else {
@@ -67,11 +65,7 @@ export function getTimelineWindow(): BrowserWindow {
       height: 600,
       show: false,
       titleBarStyle: "hiddenInset",
-      webPreferences: {
-        preload: preloadPath(),
-        contextIsolation: true,
-        nodeIntegration: false,
-      },
+      webPreferences: sharedWebPreferences(),
     });
     windows.timeline.loadFile(rendererPath("timeline/index.html"));
     windows.timeline.on("close", (e) => {
@@ -86,6 +80,4 @@ export function showTimelineWindow(): void {
   const win = getTimelineWindow();
   win.show();
   win.focus();
-  // Reload entries when window is shown
-  win.webContents.send("timeline:refresh");
 }

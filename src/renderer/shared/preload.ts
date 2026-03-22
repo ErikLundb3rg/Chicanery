@@ -24,7 +24,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.send("window:snooze", minutes),
 
   onNewPrompt: (callback: (intervalStart: number, intervalEnd: number) => void) => {
-    ipcRenderer.on("prompt:new", (_event, intervalStart: number, intervalEnd: number) => callback(intervalStart, intervalEnd));
-    return () => ipcRenderer.removeAllListeners("prompt:new");
+    const listener = (_event: Electron.IpcRendererEvent, intervalStart: number, intervalEnd: number) =>
+      callback(intervalStart, intervalEnd);
+    ipcRenderer.on("prompt:new", listener);
+    return () => ipcRenderer.removeListener("prompt:new", listener);
   },
 });

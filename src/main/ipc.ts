@@ -3,6 +3,7 @@ import type { Database } from "better-sqlite3";
 import { addEntry, getEntriesForDay, getEntriesForRange, getConfigValue, setConfigValue } from "./db/queries";
 import type { Config } from "../shared/types";
 import { DEFAULT_CONFIG } from "../shared/types";
+import { CONFIG_KEYS } from "../shared/config-keys";
 import type { PromptScheduler } from "./scheduler";
 
 export function registerIpcHandlers(db: Database, scheduler: PromptScheduler): void {
@@ -19,8 +20,8 @@ export function registerIpcHandlers(db: Database, scheduler: PromptScheduler): v
   });
 
   ipcMain.handle("config:get", (): Config => {
-    const intervalMs = getConfigValue(db, "intervalMs");
-    const launchAtLogin = getConfigValue(db, "launchAtLogin");
+    const intervalMs = getConfigValue(db, CONFIG_KEYS.intervalMs);
+    const launchAtLogin = getConfigValue(db, CONFIG_KEYS.launchAtLogin);
     return {
       intervalMs: intervalMs ? parseInt(intervalMs) : DEFAULT_CONFIG.intervalMs,
       launchAtLogin: launchAtLogin === "true",
@@ -29,11 +30,11 @@ export function registerIpcHandlers(db: Database, scheduler: PromptScheduler): v
 
   ipcMain.handle("config:set", (_event, partial: Partial<Config>) => {
     if (partial.intervalMs !== undefined) {
-      setConfigValue(db, "intervalMs", String(partial.intervalMs));
+      setConfigValue(db, CONFIG_KEYS.intervalMs, String(partial.intervalMs));
       scheduler.updateInterval(partial.intervalMs);
     }
     if (partial.launchAtLogin !== undefined) {
-      setConfigValue(db, "launchAtLogin", String(partial.launchAtLogin));
+      setConfigValue(db, CONFIG_KEYS.launchAtLogin, String(partial.launchAtLogin));
     }
   });
 }

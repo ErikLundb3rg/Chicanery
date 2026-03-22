@@ -25,10 +25,9 @@ export function runMigrations(db: Database.Database): void {
       );
     `);
 
-    if (version === 0) {
-      db.exec(`INSERT INTO schema_version VALUES (1)`);
-    } else {
-      db.exec(`UPDATE schema_version SET version = 1`);
-    }
+    db.exec(row
+      ? `UPDATE schema_version SET version = 1`
+      : `INSERT INTO schema_version VALUES (1)`
+    );
   }
 }

@@ -2,7 +2,8 @@ import { Tray, Menu, nativeImage, app } from "electron";
 import path from "path";
 import type { PromptScheduler } from "./scheduler";
 import { showPromptWindow, showTimelineWindow } from "./windows";
-import { getConfigValue, setConfigValue } from "./db/queries";
+import { setConfigValue } from "./db/queries";
+import { CONFIG_KEYS } from "../shared/config-keys";
 import type { Database } from "better-sqlite3";
 
 let tray: Tray | null = null;
@@ -39,7 +40,7 @@ export function rebuildMenu(db: Database, scheduler: PromptScheduler): void {
     type: "radio" as const,
     checked: currentMs === opt.ms,
     click: () => {
-      setConfigValue(db, "intervalMs", String(opt.ms));
+      setConfigValue(db, CONFIG_KEYS.intervalMs, String(opt.ms));
       scheduler.updateInterval(opt.ms);
       rebuildMenu(db, scheduler);
     },
