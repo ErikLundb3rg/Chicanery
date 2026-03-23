@@ -14,14 +14,20 @@ function PromptWindow() {
   const [submitting, setSubmitting] = useState(false);
   const [isOverwrite, setIsOverwrite] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const currentInterval = useRef({ start: 0, end: 0 });
 
   useEffect(() => {
     const cleanup = api.onNewPrompt(async (start, end) => {
+      currentInterval.current = { start, end };
       setIntervalStart(start);
       setIntervalEnd(end);
       setText("");
       setCategory(null);
-      setIsOverwrite(await api.hasEntryForInterval(start, end));
+      setIsOverwrite(false);
+      const hasEntry = await api.hasEntryForInterval(start, end);
+      if (currentInterval.current.start === start && currentInterval.current.end === end) {
+        setIsOverwrite(hasEntry);
+      }
       textareaRef.current?.focus();
     });
     textareaRef.current?.focus();
@@ -79,7 +85,7 @@ function PromptWindow() {
       />
 
       <div class="no-drag flex items-center gap-2 mt-2.5">
-        <span class="text-[11px] text-text-faint font-medium">Focus level</span>
+        <span class="text-[11px] text-text-faint font-medium">Productivity</span>
         <div class="flex rounded-md border border-border overflow-hidden">
           {FOCUS_LEVELS.map((level) => (
             <button

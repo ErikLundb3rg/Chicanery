@@ -59,9 +59,8 @@ export class PromptScheduler {
     }
   }
 
-  private tick(): void {
-    const now = Date.now();
-    const intervalEnd = this.lastBoundary(now);
+  private tick(targetBoundary?: number): void {
+    const intervalEnd = targetBoundary ?? this.lastBoundary();
     const intervalStart = intervalEnd - this.intervalMs;
     this.lastTickAt = intervalEnd;
     this.onTick(intervalStart, intervalEnd);
@@ -69,7 +68,8 @@ export class PromptScheduler {
   }
 
   private scheduleNext(): void {
-    const delay = Math.max(0, this.nextBoundary() - Date.now());
-    this.timer = setTimeout(() => this.tick(), delay);
+    const target = this.nextBoundary();
+    const delay = Math.max(0, target - Date.now());
+    this.timer = setTimeout(() => this.tick(target), delay);
   }
 }

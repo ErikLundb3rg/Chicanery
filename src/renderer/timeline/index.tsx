@@ -6,9 +6,9 @@ import { formatTime, formatDate, formatDuration } from "../shared/formatters";
 import type { Entry, Category } from "../../shared/types";
 
 const CATEGORY_META: Record<Category | "none", { label: string; color: string }> = {
-  focus_3:     { label: "Focus 3",      color: "#0a84ff" },
-  focus_2:     { label: "Focus 2",      color: "#5ac8fa" },
-  focus_1:     { label: "Focus 1",      color: "#6e6e73" },
+  focus_3:     { label: "Productivity 3", color: "#0a84ff" },
+  focus_2:     { label: "Productivity 2", color: "#5ac8fa" },
+  focus_1:     { label: "Productivity 1", color: "#6e6e73" },
   maintenance: { label: "Maintenance",  color: "#8e8e93" },
   none:        { label: "Uncategorized", color: "#3a3a3c" },
 };
