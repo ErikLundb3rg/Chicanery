@@ -4,7 +4,7 @@ import { getConfigValue } from "./db/queries";
 import { PromptScheduler } from "./scheduler";
 import { createTray, rebuildMenu } from "./tray";
 import { registerIpcHandlers } from "./ipc";
-import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow } from "./windows";
+import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow, destroyAllWindows } from "./windows";
 import { DEFAULT_CONFIG } from "../shared/types";
 import { CONFIG_KEYS } from "../shared/config-keys";
 
@@ -63,6 +63,7 @@ app.whenReady().then(() => {
   powerMonitor.on("resume", () => scheduler.onResume());
 
   app.on("before-quit", () => {
+    destroyAllWindows();
     clearInterval(menuRefreshInterval);
     scheduler.stop();
     closeDb();

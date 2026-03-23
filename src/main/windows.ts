@@ -81,3 +81,8 @@ export function showTimelineWindow(): void {
   win.show();
   win.focus();
 }
+
+export function destroyAllWindows(): void {
+  windows.prompt?.destroy();
+  windows.timeline?.destroy();
+}
