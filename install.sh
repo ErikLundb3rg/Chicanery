@@ -44,13 +44,10 @@ cp -R dist "$RESOURCES/app/dist"
 cp -R resources "$RESOURCES/app/resources"
 cp package.json "$RESOURCES/app/package.json"
 
-# Copy native module
-mkdir -p "$RESOURCES/app/node_modules/better-sqlite3"
+# Copy native module and its runtime dependencies
+mkdir -p "$RESOURCES/app/node_modules"
 cp -R node_modules/better-sqlite3 "$RESOURCES/app/node_modules/better-sqlite3"
-# bindings is a dependency of better-sqlite3
-mkdir -p "$RESOURCES/app/node_modules/bindings"
 cp -R node_modules/bindings "$RESOURCES/app/node_modules/bindings"
-mkdir -p "$RESOURCES/app/node_modules/file-uri-to-path"
 cp -R node_modules/file-uri-to-path "$RESOURCES/app/node_modules/file-uri-to-path"
 
 # Rename the binary
