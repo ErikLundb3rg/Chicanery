@@ -2,20 +2,22 @@
 
 Menu bar app for macOS that prompts you every 15 minutes to log what you worked on.
 
-## Requirements
+## Install
 
-- macOS
-- [Bun](https://bun.sh)
+```bash
+curl -fsSL https://raw.githubusercontent.com/ErikLundb3rg/Chicanery/main/install.sh | bash
+```
 
-## Setup
+This clones the repo, builds everything, and installs **Chicanery.app** to `/Applications`. Bun is installed automatically if needed. Then just open it from Spotlight, Launchpad, or:
+
+```bash
+open /Applications/Chicanery.app
+```
+
+## Development
 
 ```bash
 bun install
-```
-
-## Run
-
-```bash
 bun run dev
 ```
 
