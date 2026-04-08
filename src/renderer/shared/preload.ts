@@ -32,4 +32,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.on("prompt:new", listener);
     return () => ipcRenderer.removeListener("prompt:new", listener);
   },
+
+  closeTask: (): void =>
+    ipcRenderer.send("window:close-task"),
+
+  startTask: (taskName: string, durationMinutes: number): void =>
+    ipcRenderer.send("task:start", taskName, durationMinutes),
+
+  taskCompleted: (taskName: string, durationMinutes: number): void =>
+    ipcRenderer.send("task:completed", taskName, durationMinutes),
+
+  onTaskShow: (callback: () => void) => {
+    const listener = () => callback();
+    ipcRenderer.on("task:show", listener);
+    return () => ipcRenderer.removeListener("task:show", listener);
+  },
 });

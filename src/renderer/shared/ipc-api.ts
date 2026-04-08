@@ -10,6 +10,10 @@ interface ElectronAPI {
   closePrompt: () => void;
   snooze: (minutes: number) => void;
   onNewPrompt: (callback: (intervalStart: number, intervalEnd: number) => void) => () => void;
+  closeTask: () => void;
+  startTask: (taskName: string, durationMinutes: number) => void;
+  taskCompleted: (taskName: string, durationMinutes: number) => void;
+  onTaskShow: (callback: () => void) => () => void;
 }
 
 declare global {

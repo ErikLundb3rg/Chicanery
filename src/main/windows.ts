@@ -4,6 +4,7 @@ import path from "path";
 const windows: {
   prompt?: BrowserWindow;
   timeline?: BrowserWindow;
+  task?: BrowserWindow;
 } = {};
 
 function rendererPath(...parts: string[]): string {
@@ -82,7 +83,47 @@ export function showTimelineWindow(): void {
   win.focus();
 }
 
+export function getTaskWindow(): BrowserWindow {
+  if (!windows.task || windows.task.isDestroyed()) {
+    windows.task = new BrowserWindow({
+      width: 380,
+      height: 280,
+      show: false,
+      frame: false,
+      resizable: false,
+      minimizable: true,
+      webPreferences: sharedWebPreferences(),
+    });
+    windows.task.loadFile(rendererPath("task/index.html"));
+  }
+  return windows.task;
+}
+
+export function showTaskWindow(): void {
+  const win = getTaskWindow();
+
+  const { bounds } = screen.getPrimaryDisplay();
+  const x = Math.round(bounds.x + bounds.width / 2 - 190);
+  const y = Math.round(bounds.y + bounds.height / 2 - 140);
+  win.setPosition(x, y);
+
+  const send = () => win.webContents.send("task:show");
+  if (win.webContents.isLoading()) {
+    win.webContents.once("did-finish-load", send);
+  } else {
+    send();
+  }
+
+  win.show();
+  win.focus();
+}
+
+export function hideTaskWindow(): void {
+  windows.task?.hide();
+}
+
 export function destroyAllWindows(): void {
   windows.prompt?.destroy();
   windows.timeline?.destroy();
+  windows.task?.destroy();
 }

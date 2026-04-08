@@ -23,6 +23,12 @@ async function buildRenderer() {
       minify: false,
     }),
     build({
+      entrypoints: [path.join(root, "src/renderer/task/index.tsx")],
+      outdir: path.join(root, "dist/renderer/task"),
+      target: "browser",
+      minify: false,
+    }),
+    build({
       entrypoints: [path.join(root, "src/renderer/shared/preload.ts")],
       outdir: path.join(root, "dist/renderer/shared"),
       target: "node",
@@ -41,6 +47,7 @@ async function buildRenderer() {
   const copies: [string, string][] = [
     ["src/renderer/prompt/index.html", "dist/renderer/prompt/index.html"],
     ["src/renderer/timeline/index.html", "dist/renderer/timeline/index.html"],
+    ["src/renderer/task/index.html", "dist/renderer/task/index.html"],
   ];
 
   await Promise.all(

@@ -1,10 +1,10 @@
-import { app, ipcMain, powerMonitor } from "electron";
+import { app, ipcMain, powerMonitor, screen } from "electron";
 import { getDb, closeDb } from "./db/database";
 import { getConfigValue } from "./db/queries";
 import { PromptScheduler } from "./scheduler";
-import { createTray, rebuildMenu } from "./tray";
+import { createTray, rebuildMenu, startTaskTimer, stopTaskTimer } from "./tray";
 import { registerIpcHandlers } from "./ipc";
-import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow, destroyAllWindows } from "./windows";
+import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow, getTaskWindow, showTaskWindow, hideTaskWindow, destroyAllWindows } from "./windows";
 import { DEFAULT_CONFIG } from "../shared/types";
 import { CONFIG_KEYS } from "../shared/config-keys";
 
@@ -45,6 +45,30 @@ app.whenReady().then(() => {
     // handled in renderer via onNewPrompt listener
   });
 
+  // IPC: close task window (cancel)
+  ipcMain.on("window:close-task", () => {
+    hideTaskWindow();
+    stopTaskTimer();
+  });
+
+  // IPC: task started — hide window and show countdown in menu bar
+  ipcMain.on("task:start", (_event, taskName: string, durationMinutes: number) => {
+    hideTaskWindow();
+    startTaskTimer(taskName, durationMinutes);
+  });
+
+  // IPC: task completed — show the window and clear menu bar countdown
+  ipcMain.on("task:completed", (_event, _taskName: string, _durationMinutes: number) => {
+    stopTaskTimer();
+    const win = getTaskWindow();
+    const { bounds } = screen.getPrimaryDisplay();
+    const x = Math.round(bounds.x + bounds.width / 2 - 190);
+    const y = Math.round(bounds.y + bounds.height / 2 - 140);
+    win.setPosition(x, y);
+    win.show();
+    win.focus();
+  });
+
   registerIpcHandlers(db, scheduler);
 
   createTray(db, scheduler);
@@ -52,6 +76,7 @@ app.whenReady().then(() => {
   // Pre-warm windows so they appear instantly
   getPromptWindow();
   getTimelineWindow();
+  getTaskWindow();
 
   scheduler.start();
   // Show prompt for the last completed interval on launch
