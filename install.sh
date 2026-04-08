@@ -50,9 +50,13 @@ cp -R node_modules/better-sqlite3 "$RESOURCES/app/node_modules/better-sqlite3"
 cp -R node_modules/bindings "$RESOURCES/app/node_modules/bindings"
 cp -R node_modules/file-uri-to-path "$RESOURCES/app/node_modules/file-uri-to-path"
 
-# Rename the binary
+# Rename the binary and update only the display/executable name keys in Info.plist
 mv "$APP_DIR/Contents/MacOS/Electron" "$APP_DIR/Contents/MacOS/$APP_NAME"
-sed -i '' "s/Electron/$APP_NAME/g" "$APP_DIR/Contents/Info.plist"
+PLIST="$APP_DIR/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $APP_NAME" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleExecutable $APP_NAME" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleName $APP_NAME" "$PLIST"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.eriklundberg.chicanery" "$PLIST"
 
 echo ""
 echo "Installed to $APP_DIR"
