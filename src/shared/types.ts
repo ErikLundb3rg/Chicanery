@@ -15,6 +15,8 @@ export interface Entry {
   created_at: number;     // Unix ms
 }
 
+export type EntryUpdate = Pick<Entry, "content" | "category" | "interval_start" | "interval_end">;
+
 export interface Config {
   intervalMs: number;
   launchAtLogin: boolean;

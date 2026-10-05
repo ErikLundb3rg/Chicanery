@@ -4,6 +4,7 @@
   "description": "Menu bar time logger",
   "main": "dist/main/main.js",
   "scripts": {
+    "test": "bun test",
     "postinstall": "node node_modules/electron/install.js && electron-rebuild -f -w better-sqlite3",
     "dev": "bun run build:main && bun run build:renderer && electron .",
     "build:main": "bun build src/main/main.ts --target=node --format=cjs --outdir=dist/main --external=electron --external=better-sqlite3",

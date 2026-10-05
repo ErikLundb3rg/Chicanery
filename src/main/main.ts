@@ -51,13 +51,13 @@ app.whenReady().then(() => {
     stopTaskTimer();
   });
 
-  // IPC: task started — hide window and show countdown in menu bar
+  // IPC: task started — hide window and show elapsed/total time in menu bar
   ipcMain.on("task:start", (_event, taskName: string, durationMinutes: number) => {
     hideTaskWindow();
     startTaskTimer(taskName, durationMinutes);
   });
 
-  // IPC: task completed — show the window and clear menu bar countdown
+  // IPC: task completed — show the window and clear menu bar timer
   ipcMain.on("task:completed", (_event, _taskName: string, _durationMinutes: number) => {
     stopTaskTimer();
     const win = getTaskWindow();

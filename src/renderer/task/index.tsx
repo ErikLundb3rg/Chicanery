@@ -59,9 +59,10 @@ function TaskWindow() {
     if (e.key === "Escape") handleCancel();
   }
 
-  const mins = Math.floor(remainingSeconds / 60);
-  const secs = remainingSeconds % 60;
-  const countdown = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  const elapsedSeconds = Math.max(0, duration * 60 - remainingSeconds);
+  const mins = Math.floor(elapsedSeconds / 60);
+  const secs = elapsedSeconds % 60;
+  const progress = `${mins}:${String(secs).padStart(2, "0")}/${duration}`;
 
   if (completed) {
     return (
@@ -83,7 +84,8 @@ function TaskWindow() {
     return (
       <div class="flex flex-col items-center justify-center flex-1 gap-3">
         <span class="text-[13px] text-text-muted text-center leading-relaxed">{taskName}</span>
-        <span class="text-[32px] font-bold tabular-nums tracking-wide text-text-primary">{countdown}</span>
+        <span class="text-[32px] font-bold tabular-nums tracking-wide text-text-primary"
+          aria-label={`${mins} minutes ${secs} seconds elapsed of ${duration} minutes`}>{progress}</span>
         <button
           class="no-drag mt-2 w-full bg-surface-raised text-text-muted border border-border rounded-[7px] text-[13px] font-medium py-1.5 cursor-pointer active:opacity-70 transition-opacity"
           onClick={handleCancel}

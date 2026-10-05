@@ -1,7 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Entry, Config } from "../../shared/types";
+import type { Entry, EntryUpdate, Config } from "../../shared/types";
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  updateEntry: (id: number, update: EntryUpdate): Promise<Entry> =>
+    ipcRenderer.invoke("entries:update", id, update),
   submitEntry: (content: string, intervalStart: number, intervalEnd: number, category: string | null): Promise<Entry> =>
     ipcRenderer.invoke("entries:add", content, intervalStart, intervalEnd, category),
 

@@ -1,6 +1,7 @@
-import type { Entry, Config } from "../../shared/types";
+import type { Entry, EntryUpdate, Config } from "../../shared/types";
 
 interface ElectronAPI {
+  updateEntry: (id: number, update: EntryUpdate) => Promise<Entry>;
   submitEntry: (content: string, intervalStart: number, intervalEnd: number, category: string | null) => Promise<Entry>;
   hasEntryForInterval: (intervalStart: number, intervalEnd: number) => Promise<boolean>;
   getEntriesForToday: () => Promise<Entry[]>;

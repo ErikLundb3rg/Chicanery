@@ -101,9 +101,10 @@ export function startTaskTimer(name: string, durationMinutes: number): void {
       stopTaskTimer();
       return;
     }
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
-    tray.setTitle(`${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`, { fontType: "monospacedDigit" });
+    const elapsed = Math.max(0, durationMinutes * 60 - remaining);
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    tray.setTitle(`${m}:${String(s).padStart(2, "0")}/${durationMinutes}`, { fontType: "monospacedDigit" });
   };
   update();
   activeTask = { name, endTime, intervalId: setInterval(update, 1000) };
