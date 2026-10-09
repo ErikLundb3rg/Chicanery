@@ -17,6 +17,13 @@ export interface Entry {
 
 export type EntryUpdate = Pick<Entry, "content" | "category" | "interval_start" | "interval_end">;
 
+export interface TaskState {
+  name: string;
+  durationMinutes: number;
+  endTime: number;
+  status: "running" | "completed";
+}
+
 export interface Config {
   intervalMs: number;
   launchAtLogin: boolean;

@@ -2,6 +2,7 @@
 import { render } from "preact";
 import { useState, useEffect, useRef } from "preact/hooks";
 import { api } from "../shared/ipc-api";
+import type { TaskState } from "../../shared/types";
 
 function TaskWindow() {
   const [taskName, setTaskName] = useState("");
@@ -9,45 +10,44 @@ function TaskWindow() {
   const [running, setRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const endTimeRef = useRef(0);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const cleanup = api.onTaskShow(() => {
+  function applyState(state: TaskState | null) {
+    if (!state) {
       setTaskName("");
       setDuration(25);
       setRunning(false);
       setCompleted(false);
       setRemainingSeconds(0);
-      endTimeRef.current = 0;
+      setError("");
       inputRef.current?.focus();
-    });
-    inputRef.current?.focus();
-    return cleanup;
-  }, []);
+      return;
+    }
+    setTaskName(state.name);
+    setDuration(state.durationMinutes);
+    setRunning(state.status === "running");
+    setCompleted(state.status === "completed");
+    setRemainingSeconds(Math.max(0, Math.min(state.durationMinutes * 60, Math.ceil((state.endTime - Date.now()) / 1000))));
+  }
 
   useEffect(() => {
-    if (!running) return;
-    const tick = () => {
-      const remaining = Math.max(0, Math.ceil((endTimeRef.current - Date.now()) / 1000));
-      setRemainingSeconds(remaining);
-      if (remaining <= 0) {
-        setRunning(false);
-        setCompleted(true);
-        api.taskCompleted(taskName, duration);
-      }
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [running]);
+    const refresh = () => { api.getTaskState().then(applyState).catch(() => setError("Could not load the timer. Please reopen this window.")); };
+    const cleanupState = api.onTaskState(applyState);
+    const cleanupShow = api.onTaskShow(refresh);
+    refresh();
+    inputRef.current?.focus();
+    return () => { cleanupState(); cleanupShow(); };
+  }, []);
 
-  function handleStart() {
-    if (!taskName.trim() || duration < 1) return;
-    endTimeRef.current = Date.now() + duration * 60 * 1000;
-    setRemainingSeconds(duration * 60);
-    setRunning(true);
-    api.startTask(taskName.trim(), duration);
+  async function handleStart() {
+    if (!taskName.trim() || duration < 1 || duration > 999 || starting || running || completed) return;
+    setStarting(true);
+    setError("");
+    try { applyState(await api.startTask(taskName.trim(), duration)); }
+    catch { setError("Could not start the timer. Please try again."); }
+    finally { setStarting(false); }
   }
 
   function handleCancel() {
@@ -136,11 +136,12 @@ function TaskWindow() {
         <button
           class="flex-1 bg-accent text-white rounded-[7px] text-[13px] font-medium py-1.5 cursor-pointer active:opacity-70 transition-opacity disabled:bg-accent-muted disabled:text-text-ghost disabled:cursor-not-allowed"
           onClick={handleStart}
-          disabled={!taskName.trim()}
+          disabled={!taskName.trim() || starting || duration < 1 || duration > 999}
         >
-          Start (⌘↵)
+          {starting ? "Starting…" : "Start (⌘↵)"}
         </button>
       </div>
+      {error && <p role="alert" class="text-xs text-red-400 mt-2">{error}</p>}
     </>
   );
 }

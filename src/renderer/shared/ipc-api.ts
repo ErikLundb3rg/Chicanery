@@ -1,4 +1,4 @@
-import type { Entry, EntryUpdate, Config } from "../../shared/types";
+import type { Entry, EntryUpdate, Config, TaskState } from "../../shared/types";
 
 interface ElectronAPI {
   updateEntry: (id: number, update: EntryUpdate) => Promise<Entry>;
@@ -12,8 +12,9 @@ interface ElectronAPI {
   snooze: (minutes: number) => void;
   onNewPrompt: (callback: (intervalStart: number, intervalEnd: number) => void) => () => void;
   closeTask: () => void;
-  startTask: (taskName: string, durationMinutes: number) => void;
-  taskCompleted: (taskName: string, durationMinutes: number) => void;
+  startTask: (taskName: string, durationMinutes: number) => Promise<TaskState>;
+  getTaskState: () => Promise<TaskState | null>;
+  onTaskState: (callback: (state: TaskState | null) => void) => () => void;
   onTaskShow: (callback: () => void) => () => void;
 }
 

@@ -1,10 +1,11 @@
-import { app, ipcMain, powerMonitor, screen } from "electron";
+import { app, ipcMain, powerMonitor } from "electron";
 import { getDb, closeDb } from "./db/database";
 import { getConfigValue } from "./db/queries";
 import { PromptScheduler } from "./scheduler";
-import { createTray, rebuildMenu, startTaskTimer, stopTaskTimer } from "./tray";
+import { createTray, rebuildMenu, updateTaskTimerDisplay } from "./tray";
+import { TaskTimer } from "./task-timer";
 import { registerIpcHandlers } from "./ipc";
-import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow, getTaskWindow, showTaskWindow, hideTaskWindow, destroyAllWindows } from "./windows";
+import { showPromptWindow, hidePromptWindow, getPromptWindow, getTimelineWindow, getTaskWindow, hideTaskWindow, updateTaskWindow, destroyAllWindows } from "./windows";
 import { DEFAULT_CONFIG } from "../shared/types";
 import { CONFIG_KEYS } from "../shared/config-keys";
 
@@ -21,10 +22,15 @@ app.whenReady().then(() => {
 
   // Load saved interval or fall back to default
   const savedInterval = getConfigValue(db, CONFIG_KEYS.intervalMs);
-  const intervalMs = savedInterval ? parseInt(savedInterval) : DEFAULT_CONFIG.intervalMs;
+  const parsedInterval = savedInterval ? Number(savedInterval) : DEFAULT_CONFIG.intervalMs;
+  const intervalMs = Number.isSafeInteger(parsedInterval) && parsedInterval > 0 ? parsedInterval : DEFAULT_CONFIG.intervalMs;
 
   const scheduler = new PromptScheduler(intervalMs, (intervalStart, intervalEnd) => {
     showPromptWindow(intervalStart, intervalEnd);
+  });
+  const taskTimer = new TaskTimer((state) => {
+    updateTaskTimerDisplay(state);
+    updateTaskWindow(state);
   });
 
   // IPC: close prompt window
@@ -34,10 +40,8 @@ app.whenReady().then(() => {
 
   // IPC: snooze prompt
   ipcMain.on("window:snooze", (_event, minutes: number) => {
-    const originalMs = scheduler.getIntervalMs();
+    scheduler.snooze(minutes * 60_000);
     hidePromptWindow();
-    scheduler.updateInterval(minutes * 60 * 1000);
-    setTimeout(() => scheduler.updateInterval(originalMs), minutes * 60 * 1000);
   });
 
   // IPC: timeline refresh signal
@@ -48,25 +52,19 @@ app.whenReady().then(() => {
   // IPC: close task window (cancel)
   ipcMain.on("window:close-task", () => {
     hideTaskWindow();
-    stopTaskTimer();
+    taskTimer.stop();
   });
 
   // IPC: task started — hide window and show elapsed/total time in menu bar
-  ipcMain.on("task:start", (_event, taskName: string, durationMinutes: number) => {
+  ipcMain.handle("task:start", (_event, taskName: string, durationMinutes: number) => {
+    const state = taskTimer.start(taskName, durationMinutes);
     hideTaskWindow();
-    startTaskTimer(taskName, durationMinutes);
+    return state;
   });
 
-  // IPC: task completed — show the window and clear menu bar timer
-  ipcMain.on("task:completed", (_event, _taskName: string, _durationMinutes: number) => {
-    stopTaskTimer();
-    const win = getTaskWindow();
-    const { bounds } = screen.getPrimaryDisplay();
-    const x = Math.round(bounds.x + bounds.width / 2 - 190);
-    const y = Math.round(bounds.y + bounds.height / 2 - 140);
-    win.setPosition(x, y);
-    win.show();
-    win.focus();
+  ipcMain.handle("task:getState", () => {
+    taskTimer.check();
+    return taskTimer.getState();
   });
 
   registerIpcHandlers(db, scheduler);
@@ -85,9 +83,15 @@ app.whenReady().then(() => {
 
   const menuRefreshInterval = setInterval(() => rebuildMenu(db, scheduler), 60_000);
 
-  powerMonitor.on("resume", () => scheduler.onResume());
+  const recoverTimers = () => {
+    scheduler.onResume();
+    taskTimer.check();
+  };
+  powerMonitor.on("resume", recoverTimers);
+  powerMonitor.on("unlock-screen", recoverTimers);
 
   app.on("before-quit", () => {
+    taskTimer.stop();
     destroyAllWindows();
     clearInterval(menuRefreshInterval);
     scheduler.stop();

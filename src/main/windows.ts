@@ -1,5 +1,6 @@
 import { BrowserWindow, screen, app } from "electron";
 import path from "path";
+import type { TaskState } from "../shared/types";
 
 const windows: {
   prompt?: BrowserWindow;
@@ -32,6 +33,7 @@ export function getPromptWindow(): BrowserWindow {
       webPreferences: sharedWebPreferences(),
     });
     windows.prompt.loadFile(rendererPath("prompt/index.html"));
+    windows.prompt.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
   return windows.prompt;
 }
@@ -92,9 +94,11 @@ export function getTaskWindow(): BrowserWindow {
       frame: false,
       resizable: false,
       minimizable: true,
+      alwaysOnTop: true,
       webPreferences: sharedWebPreferences(),
     });
     windows.task.loadFile(rendererPath("task/index.html"));
+    windows.task.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
   return windows.task;
 }
@@ -120,6 +124,20 @@ export function showTaskWindow(): void {
 
 export function hideTaskWindow(): void {
   windows.task?.hide();
+}
+
+export function updateTaskWindow(state: TaskState | null): void {
+  const win = state?.status === "completed" ? getTaskWindow() : windows.task;
+  if (!win || win.isDestroyed()) return;
+  if (!win.webContents.isLoading()) win.webContents.send("task:state", state);
+  if (state?.status === "completed") {
+    const { bounds } = screen.getPrimaryDisplay();
+    win.setPosition(Math.round(bounds.x + bounds.width / 2 - 190), Math.round(bounds.y + bounds.height / 2 - 140));
+    if (win.isMinimized()) win.restore();
+    win.show();
+    win.focus();
+    app.dock?.bounce("informational");
+  }
 }
 
 export function destroyAllWindows(): void {

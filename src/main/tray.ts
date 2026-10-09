@@ -5,9 +5,9 @@ import { showPromptWindow, showTimelineWindow, showTaskWindow } from "./windows"
 import { setConfigValue } from "./db/queries";
 import { CONFIG_KEYS } from "../shared/config-keys";
 import type { Database } from "better-sqlite3";
+import type { TaskState } from "../shared/types";
 
 let tray: Tray | null = null;
-let activeTask: { name: string; endTime: number; intervalId: ReturnType<typeof setInterval> } | null = null;
 
 const INTERVAL_OPTIONS = [
   { label: "5 minutes", ms: 5 * 60 * 1000 },
@@ -91,29 +91,14 @@ export function rebuildMenu(db: Database, scheduler: PromptScheduler): void {
   tray.setContextMenu(menu);
 }
 
-export function startTaskTimer(name: string, durationMinutes: number): void {
-  stopTaskTimer();
-  const endTime = Date.now() + durationMinutes * 60 * 1000;
-  const update = () => {
-    if (!tray) return;
-    const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-    if (remaining <= 0) {
-      stopTaskTimer();
-      return;
-    }
-    const elapsed = Math.max(0, durationMinutes * 60 - remaining);
-    const m = Math.floor(elapsed / 60);
-    const s = elapsed % 60;
-    tray.setTitle(`${m}:${String(s).padStart(2, "0")}/${durationMinutes}`, { fontType: "monospacedDigit" });
-  };
-  update();
-  activeTask = { name, endTime, intervalId: setInterval(update, 1000) };
-}
-
-export function stopTaskTimer(): void {
-  if (activeTask) {
-    clearInterval(activeTask.intervalId);
-    activeTask = null;
+export function updateTaskTimerDisplay(state: TaskState | null): void {
+  if (!state || state.status !== "running") {
+    tray?.setTitle("");
+    return;
   }
-  tray?.setTitle("");
+  const elapsed = Math.max(0, Math.min(state.durationMinutes * 60,
+    Math.floor((Date.now() - (state.endTime - state.durationMinutes * 60_000)) / 1000)));
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  tray?.setTitle(`${m}:${String(s).padStart(2, "0")}/${state.durationMinutes}`, { fontType: "monospacedDigit" });
 }

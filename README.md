@@ -30,6 +30,7 @@ The app lives in the menu bar. There is no Dock icon. Quit from the menu bar ico
 - Today's timeline places tasks on an hourly scale with proportional durations, labelled unlogged gaps, and overlapping tasks side by side. Use **Now** to jump to the current time.
 - The timeline starts in **Compact** mode. Choose **Entire day** to fit the day in the window, or **Detailed** for larger task blocks. Hover over small blocks to see their details.
 - Click a task in the timeline to edit its text, category, or start/end date and time, then choose **Save changes**.
+- Task timers run in the main process and show a completion window even while the task window is hidden. After sleep or unlock, expired tasks complete and logging reminders catch up to the latest interval.
 - Entries are stored locally at `~/Library/Application Support/chicanery/chicanery.db`
 
 ## Reset

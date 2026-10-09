@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { Entry, EntryUpdate, Config } from "../../shared/types";
+import type { Entry, EntryUpdate, Config, TaskState } from "../../shared/types";
 
 contextBridge.exposeInMainWorld("electronAPI", {
   updateEntry: (id: number, update: EntryUpdate): Promise<Entry> =>
@@ -38,11 +38,16 @@ contextBridge.exposeInMainWorld("electronAPI", {
   closeTask: (): void =>
     ipcRenderer.send("window:close-task"),
 
-  startTask: (taskName: string, durationMinutes: number): void =>
-    ipcRenderer.send("task:start", taskName, durationMinutes),
+  startTask: (taskName: string, durationMinutes: number): Promise<TaskState> =>
+    ipcRenderer.invoke("task:start", taskName, durationMinutes),
 
-  taskCompleted: (taskName: string, durationMinutes: number): void =>
-    ipcRenderer.send("task:completed", taskName, durationMinutes),
+  getTaskState: (): Promise<TaskState | null> => ipcRenderer.invoke("task:getState"),
+
+  onTaskState: (callback: (state: TaskState | null) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: TaskState | null) => callback(state);
+    ipcRenderer.on("task:state", listener);
+    return () => ipcRenderer.removeListener("task:state", listener);
+  },
 
   onTaskShow: (callback: () => void) => {
     const listener = () => callback();
